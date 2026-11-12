@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<!--
+  Developer harness for the Ceiling Scene Generator card.
+
+  Renders the real card bundle with a stubbed Home Assistant object (a fake
+  `hass.states` containing the generator switch plus a handful of lights) so the
+  card can be exercised without a running Home Assistant.  Used by the browser
+  smoke checks; open it directly from disk.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Ceiling Scene Card - dev harness</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #060B16;
+      color: #E2E8F0;
+      font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+    }
+    h1 { font-size: 18px; margin: 0 0 4px; }
+    p.hint { font-size: 12px; color: #94A3B8; margin: 0 0 18px; }
+    .grid { display: grid; grid-template-columns: minmax(0, 780px) minmax(0, 1fr); gap: 20px; align-items: start; }
+    .panel { background: #1E293B; border: 1px solid #64748B; border-radius: 12px; padding: 12px; }
+    .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .4px; color: #94A3B8; margin: 0 0 8px; }
+    pre { margin: 0; font-size: 11px; max-height: 320px; overflow: auto; white-space: pre-wrap; color: #CBD5E1; }
+    code { font-family: ui-monospace, Menlo, Consolas, monospace; }
+    #log { font-size: 11px; line-height: 1.6; font-family: ui-monospace, Menlo, Consolas, monospace; }
+    .ok { color: #4ADE80; }
+    .bad { color: #F87171; }
+  </style>
+</head>
+<body>
+  <h1>Ceiling Scene Card - development harness</h1>
+  <p class="hint">No Home Assistant behind this page: <code>hass</code> is stubbed, so Start/Stop report "connection unavailable" by design.</p>
+
+  <div class="grid">
+    <div>
+      <ceiling-scene-card id="card" title="Living Room Ceiling"></ceiling-scene-card>
+    </div>
+    <div>
+      <div class="panel">
+        <h2>Harness log</h2>
+        <div id="log"></div>
+      </div>
+      <div class="panel" style="margin-top:14px">
+        <h2>Exported service call</h2>
+        <pre id="export">&nbsp;</pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.__errors = [];
+    window.addEventListener('error', function (ev) {
+      window.__errors.push(String((ev && ev.message) || ev));
+    });
+    window.addEventListener('unhandledrejection', function (ev) {
+      window.__errors.push('unhandled rejection: ' + String(ev && ev.reason));
+    });
+    var realError = console.error;
+    console.error = function () {
+      window.__errors.push(Array.prototype.map.call(arguments, String).join(' '));
+      realError.apply(console, arguments);
+    };
+  </script>
+  <script src="../custom_components/ceiling_scene_generator/www/ceiling-scene-card.js"></script>
+  <script>
+    var log = document.getElementById('log');
+    function say(text, ok) {
+      var line = document.createElement('div');
+      line.className = ok === false ? 'bad' : (ok === true ? 'ok' : '');
+      line.textContent = text;
+      log.appendChild(line);
+    }
+
+    var states = {
+      'switch.ceiling_scene': {
+        entity_id: 'switch.ceiling_scene',
+        state: 'off',
+        attributes: { ceiling_scene_generator: true, effect: 'linear_wave', lights: 12, frames: 0 }
+      }
+    };
+    for (var i = 1; i <= 12; i++) {
+      states['light.ceiling_can_' + i] = {
+        entity_id: 'light.ceiling_can_' + i,
+        state: 'on',
+        attributes: { rgb_color: [255, 200, 120], brightness: 170, supported_color_modes: ['rgb'] }
+      };
+    }
+
+    var calls = [];
+    var hass = {
+      states: states,
+      callService: function (domain, service, data) {
+        calls.push({ domain: domain, service: service, data: data });
+        return Promise.resolve({ response: { service: service, received: true } });
+      },
+      callWS: function () { return Promise.resolve({}); }
+    };
+
+    var card = document.getElementById('card');
+    var engine = window.CeilingSceneEngine;
+    card.setConfig({ type: 'custom:ceiling-scene-card', title: 'Living Room Ceiling', effect: 'spiral_vortex', palette: 'cyberpunk' });
+    card.hass = hass;
+
+    say('engine v' + engine.VERSION + ' · ' + engine.EFFECTS.length + ' effects · ' + Object.keys(engine.PALETTES).length + ' palettes');
+    say('card defined: ' + !!customElements.get('ceiling-scene-card'));
+    say('card config applied, hass stub attached');
+    say('scene: ' + card.sceneLayout.lights.length + ' lights, effect ' + card.effectMode + ', palette ' + card.paletteStops[0]);
+
+    document.addEventListener('ceiling-scene-change', function () {
+      document.getElementById('export').textContent = card.exportServiceCallYaml();
+      window.__changeCount = (window.__changeCount || 0) + 1;
+    });
+
+    window.__harness = {
+      card: card,
+      calls: calls,
+      states: states,
+      tab: function (name) {
+        var tabs = card.shadowRoot.querySelectorAll('.tab');
+        for (var i = 0; i < tabs.length; i++) {
+          if (tabs[i].textContent.toLowerCase().indexOf(name) === 0) {
+            tabs[i].click();
+            return 'clicked ' + name;
+          }
+        }
+        return 'tab not found: ' + name;
+      },
+      clickText: function (text, root) {
+        var scope = root || card.shadowRoot;
+        var buttons = scope.querySelectorAll('button');
+        for (var i = 0; i < buttons.length; i++) {
+          if (buttons[i].textContent.trim().toLowerCase().indexOf(text.toLowerCase()) === 0) {
+            buttons[i].click();
+            return 'clicked ' + buttons[i].textContent.trim();
+          }
+        }
+        return 'button not found: ' + text;
+      }
+    };
+  </script>
+</body>
+</html>

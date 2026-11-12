@@ -1,0 +1,56 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ceiling Scene Generator",
+        "description": "Defaults for the live generator. Everything else (room, fixtures, effect, palette) is configured in the Lovelace card - these values can be changed later in the integration options.",
+        "data": {
+          "update_interval": "Update interval (seconds)",
+          "transition": "Light transition (seconds)",
+          "auto_resume": "Resume the last scene after a Home Assistant restart"
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Ceiling Scene Generator is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ceiling Scene Generator options",
+        "data": {
+          "update_interval": "Update interval (seconds)",
+          "transition": "Light transition (seconds)",
+          "auto_resume": "Resume the last scene after a Home Assistant restart"
+        }
+      }
+    }
+  },
+  "services": {
+    "start": {
+      "name": "Start generator",
+      "description": "Start the live ceiling scene generator."
+    },
+    "stop": {
+      "name": "Stop generator",
+      "description": "Stop the live ceiling scene generator."
+    },
+    "save_as_script": {
+      "name": "Compile to HA script",
+      "description": "Compile a scene into a standalone scripts.yaml entry."
+    },
+    "save_scene": {
+      "name": "Save scene",
+      "description": "Store a scene layout, effect, parameters and palette."
+    },
+    "delete_scene": {
+      "name": "Delete scene",
+      "description": "Remove a stored scene."
+    },
+    "list_scenes": {
+      "name": "List scenes",
+      "description": "Return all stored scenes and the runner status."
+    }
+  }
+}

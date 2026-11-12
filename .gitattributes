@@ -1,0 +1,11 @@
+# Keep every text file LF, everywhere: the Python engine, the card bundle and the
+# generated studio are byte-compared across platforms (JS parity test, studio
+# freshness check), so CRLF translation must never kick in.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

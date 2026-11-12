@@ -1,0 +1,48 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  bare-python:
+    name: Engine + card parity (python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install the optional YAML parser
+        run: npm install --prefix tools
+      - name: Unit + parity suite
+        run: python tests/run_tests.py -v
+      - name: Card bundle syntax
+        run: node --check custom_components/ceiling_scene_generator/www/ceiling-scene-card.js
+      - name: Studio is freshly generated
+        run: |
+          python tools/build_studio.py
+          git diff --exit-code -- studio/
+
+  home-assistant:
+    name: Loads in Home Assistant
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install Home Assistant test harness
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest pytest-homeassistant-custom-component
+      - name: Integration boots, registers its services and drives a light
+        run: python -m pytest tests_ha -q

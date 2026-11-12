@@ -1,0 +1,13 @@
+{
+  "domain": "ceiling_scene_generator",
+  "name": "Ceiling Scene Generator",
+  "codeowners": ["@tantzers-center"],
+  "config_flow": true,
+  "dependencies": ["frontend", "http"],
+  "documentation": "https://github.com/tantzers-center/ceiling-scene-generator#readme",
+  "integration_type": "service",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/tantzers-center/ceiling-scene-generator/issues",
+  "requirements": [],
+  "version": "1.0.0"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "ceiling-scene-generator-tools",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Dev-only tooling: validates generated YAML with a real parser (npm install --prefix tools).",
+  "devDependencies": {
+    "yaml": "^2.6.0"
+  }
+}

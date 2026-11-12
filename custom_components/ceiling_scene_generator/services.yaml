@@ -1,0 +1,311 @@
+start:
+  name: Start generator
+  description: >-
+    Start (or restart) the live ceiling scene generator. Frames are pushed as
+    grouped light.turn_on calls every update_interval seconds with a matching
+    hardware transition, so movement stays smooth while the Wi-Fi stays quiet.
+    Pass either a full `scene:` layout or the `name:` of a scene previously
+    stored with ceiling_scene_generator.save_scene.
+  fields:
+    name:
+      name: Scene name
+      description: Friendly name of the scene (also used to look up a saved scene).
+      required: false
+      example: Living Room
+      selector:
+        text:
+    scene:
+      name: Scene
+      description: >-
+        Room boundaries, grid definition and fixtures. Each light needs an
+        entity_id plus x/y coordinates in metres (row/col drive the checkerboard
+        and brick effects).
+      required: false
+      example:
+        name: Living Room
+        room: {width: 6, height: 4.5, padding: 0.5}
+        grid: {mode: grid, rows: 3, cols: 4}
+        lights:
+          - {entity_id: light.ceiling_can_1, x: 1.125, y: 1.08, row: 0, col: 0}
+      selector:
+        object:
+    effect:
+      name: Effect
+      description: One of the ten mathematical spatial effects.
+      required: false
+      default: linear_wave
+      selector:
+        select:
+          options:
+            - linear_wave
+            - radial_pulse
+            - checkerboard_breathe
+            - diagonal_runs
+            - perimeter_chase
+            - bouncing_jumps
+            - galaxy_stars
+            - spiral_vortex
+            - crossfire_waves
+            - center_burst
+    params:
+      name: Parameters
+      description: >-
+        speed (cycles/second), angle (degrees), wavelength (fraction of the room),
+        center_x / center_y (0-1), arms, steps, sigma, phase,
+        brightness_min / brightness_max (%), amplitude (0-1).
+      required: false
+      example: {speed: 0.12, wavelength: 0.35, brightness_min: 15, brightness_max: 100}
+      selector:
+        object:
+    palette:
+      name: Palette
+      description: Palette preset name (sunset, ocean, cyberpunk, rainbow, forest, aurora, ember, ice) or a list of #RRGGBB stops.
+      required: false
+      example: sunset
+      selector:
+        text:
+    update_interval:
+      name: Update interval
+      description: Seconds between frames pushed to the lights.
+      required: false
+      default: 1.5
+      selector:
+        number:
+          min: 0.2
+          max: 60
+          step: 0.1
+          mode: box
+          unit_of_measurement: s
+    transition:
+      name: Transition
+      description: Hardware fade time sent with every call (keep it close to the update interval).
+      required: false
+      default: 1.4
+      selector:
+        number:
+          min: 0
+          max: 60
+          step: 0.1
+          mode: box
+          unit_of_measurement: s
+    min_color_delta:
+      name: Minimum colour delta
+      description: Skip a light unless one of its RGB channels moved at least this much (0-255).
+      required: false
+      default: 5
+      selector:
+        number:
+          min: 0
+          max: 255
+          step: 1
+          mode: box
+    min_brightness_delta:
+      name: Minimum brightness delta
+      description: Skip a light unless its brightness moved at least this much (0-100).
+      required: false
+      default: 4
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 1
+          mode: box
+    restore_on_stop:
+      name: Restore on stop
+      description: Remember the pre-start colour/brightness of every light and put it back when the generator is stopped.
+      required: false
+      default: false
+      selector:
+        boolean:
+    save:
+      name: Save scene
+      description: Store this configuration as a reusable scene.
+      required: false
+      default: false
+      selector:
+        boolean:
+
+stop:
+  name: Stop generator
+  description: Stop the live generator.
+  fields:
+    restore_state:
+      name: Restore state
+      description: Put the lights back to the colour/brightness they had before the generator started.
+      required: false
+      default: false
+      selector:
+        boolean:
+    clear_last_run:
+      name: Clear last run
+      description: Also forget the stored last run so it can no longer be auto-resumed.
+      required: false
+      default: false
+      selector:
+        boolean:
+
+save_as_script:
+  name: Compile to HA script
+  description: >-
+    Compile one full cycle of the scene into a standalone scripts.yaml entry
+    (optionally written to <config>/ceiling_scenes/) and return the YAML.
+  fields:
+    name:
+      name: Scene name
+      description: Name of a saved scene to compile.
+      required: false
+      selector:
+        text:
+    scene:
+      name: Scene
+      description: Inline scene layout to compile.
+      required: false
+      selector:
+        object:
+    effect:
+      name: Effect
+      required: false
+      selector:
+        select:
+          options:
+            - linear_wave
+            - radial_pulse
+            - checkerboard_breathe
+            - diagonal_runs
+            - perimeter_chase
+            - bouncing_jumps
+            - galaxy_stars
+            - spiral_vortex
+            - crossfire_waves
+            - center_burst
+    params:
+      name: Parameters
+      required: false
+      selector:
+        object:
+    palette:
+      name: Palette
+      required: false
+      selector:
+        text:
+    frames:
+      name: Frames per cycle
+      description: How many frames are sampled per full cycle (2-120). Higher = smoother and more packets.
+      required: false
+      default: 8
+      selector:
+        number:
+          min: 2
+          max: 120
+          step: 1
+          mode: box
+    transition:
+      name: Transition
+      description: Hardware fade time for every frame (defaults to 95% of the frame delay).
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 60
+          step: 0.05
+          mode: box
+          unit_of_measurement: s
+    script_name:
+      name: Script id
+      description: Entity id of the generated script (defaults to <scene>_<effect>).
+      required: false
+      selector:
+        text:
+    alias:
+      name: Script alias
+      required: false
+      selector:
+        text:
+    write_file:
+      name: Write to file
+      description: Also write the YAML to <config>/ceiling_scenes/.
+      required: false
+      default: false
+      selector:
+        boolean:
+    filename:
+      name: File name
+      required: false
+      selector:
+        text:
+
+save_scene:
+  name: Save scene
+  description: Persist the room/lights layout plus effect, parameters and palette in Home Assistant Storage.
+  fields:
+    name:
+      name: Scene name
+      required: true
+      example: Living Room
+      selector:
+        text:
+    scene:
+      name: Scene
+      required: false
+      selector:
+        object:
+    effect:
+      name: Effect
+      required: false
+      selector:
+        select:
+          options:
+            - linear_wave
+            - radial_pulse
+            - checkerboard_breathe
+            - diagonal_runs
+            - perimeter_chase
+            - bouncing_jumps
+            - galaxy_stars
+            - spiral_vortex
+            - crossfire_waves
+            - center_burst
+    params:
+      name: Parameters
+      required: false
+      selector:
+        object:
+    palette:
+      name: Palette
+      required: false
+      selector:
+        text:
+    update_interval:
+      name: Update interval
+      required: false
+      selector:
+        number:
+          min: 0.2
+          max: 60
+          step: 0.1
+          mode: box
+          unit_of_measurement: s
+    transition:
+      name: Transition
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 60
+          step: 0.1
+          mode: box
+          unit_of_measurement: s
+
+delete_scene:
+  name: Delete scene
+  description: Remove a stored scene.
+  fields:
+    name:
+      name: Scene name
+      required: true
+      selector:
+        text:
+
+list_scenes:
+  name: List scenes
+  description: Return every stored scene together with the current runner status (response only).
