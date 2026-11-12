@@ -27,6 +27,8 @@ jobs:
         run: python tests/run_tests.py -v
       - name: Card bundle syntax
         run: node --check custom_components/ceiling_scene_generator/www/ceiling-scene-card.js
+      - name: dist/ card is freshly published
+        run: python tools/build_dist.py --check
       - name: Studio is freshly generated
         run: |
           python tools/build_studio.py

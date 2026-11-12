@@ -14,6 +14,7 @@ It ships three things:
 | `custom_components/ceiling_scene_generator/` | The integration: async task runner, six services, HA Storage persistence, a compiled-script exporter and a switch entity. |
 | `www/ceiling-scene-card.js` | A dependency-free Lovelace card: photorealistic ceiling canvas, drag-and-drop fixture editor, 10 effect presets, palette builder, live generator control. |
 | `studio/ceiling-scene-studio.html` | A standalone browser studio for designing a scene without Home Assistant (same engine, exports the YAML/JSON to paste back). |
+| `dist/ceiling-scene-card.js` | The same card bundle, published at the repo root for card-only installs (generated — `python tools/build_dist.py`). |
 
 Works with Luxrite, Tuya, Philips Hue, Govee — anything exposed as a `light.*` entity that supports
 RGB / RGBW / RGBWW colour and brightness.
@@ -52,6 +53,11 @@ The integration serves the card itself and registers it as a Lovelace resource a
 If you prefer to manage resources yourself, copy
 `custom_components/ceiling_scene_generator/www/ceiling-scene-card.js` into `config/www/` and add
 `/local/ceiling-scene-card.js` (type: JavaScript module) under **Settings → Dashboards → Resources**.
+
+Only want the card, no integration? `dist/ceiling-scene-card.js` is the identical bundle published at
+the repository root — download it, drop it in `config/www/`, and register
+`/local/ceiling-scene-card.js`. It is generated from the integration's copy by
+`python tools/build_dist.py`, and a test fails if the two ever drift apart.
 
 Add the card to a dashboard as a manual card:
 
