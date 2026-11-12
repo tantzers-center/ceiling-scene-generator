@@ -66,12 +66,10 @@ class CeilingSceneGeneratorConfigFlow(ConfigFlow, domain=DOMAIN):
 class CeilingSceneGeneratorOptionsFlow(OptionsFlow):
     """Edit the default timing and start-up behaviour."""
 
-    def __init__(self, config_entry: ConfigEntry | None = None) -> None:
-        # Recent cores inject `config_entry` for us; older ones expect it here.
-        if config_entry is not None:
-            self.config_entry = config_entry
-
     def _entry(self) -> ConfigEntry | None:
+        # Recent cores set `config_entry` themselves as a read-only property;
+        # assigning it raises AttributeError, so we only ever read it (with a
+        # fallback for very old cores that pass nothing).
         entry = getattr(self, "config_entry", None)
         if entry is not None:
             return entry

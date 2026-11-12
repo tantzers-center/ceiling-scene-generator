@@ -34,7 +34,7 @@
    * ====================================================================== */
 
   var ENGINE = (function () {
-    var VERSION = '1.0.0';
+    var VERSION = '1.2.0';
 
     var EFFECTS = [
       'linear_wave', 'radial_pulse', 'checkerboard_breathe', 'diagonal_runs',

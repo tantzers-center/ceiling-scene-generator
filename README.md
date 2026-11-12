@@ -115,8 +115,32 @@ Card options:
 
 ### Entities
 
-`switch.ceiling_scene` is on while the generator is running. Attributes show the active effect,
-scene name, light count, update interval, frames sent, service calls and the list of saved scenes.
+The integration creates one entity, on the **Ceiling Scene Generator** device: the generator switch
+(`switch.ceiling_scene_generator` on a fresh install, renamed to
+`switch.ceiling_scene_generator_ceiling_scene` if you installed 1.0.0 or 1.1.0 — an existing entity id
+is never rewritten, and the card finds the switch by its `ceiling_scene_generator` attribute rather
+than by id, so a rename is harmless).
+
+It is on while the generator is running, and **turning it on replays the last run configuration** (the
+same thing the `auto_resume` option does at start-up). Attributes show the active effect, scene name,
+light count, update interval, frames sent, service calls, the last error if any, and the list of saved
+scenes. These attributes are what the card's status chip reads.
+
+### Saving and recalling scenes
+
+`save_scene` stores whatever the call specifies — `scene`, `effect`, `params`, `palette`,
+`update_interval` and `transition` — under `name`, in
+`.storage/ceiling_scene_generator.store`. It returns a `stored` block echoing what was written, so a
+typo is visible in the response instead of silently stored as a default. Recall a scene by passing only
+its name:
+
+```yaml
+action: ceiling_scene_generator.start
+data:
+  name: Living Room
+```
+
+Anything you pass alongside `name` overrides the stored value for that run.
 
 ---
 
@@ -125,9 +149,9 @@ scene name, light count, update interval, frames sent, service calls and the lis
 | Service | Purpose |
 | --- | --- |
 | `ceiling_scene_generator.start` | Start/restart the live generator (pass a `scene:` layout or the `name:` of a saved scene). |
-| `ceiling_scene_generator.stop` | Stop it, optionally restoring the lights' previous state. |
+| `ceiling_scene_generator.stop` | Stop it, optionally restoring the lights' previous state. Returns the runner snapshot. |
 | `ceiling_scene_generator.save_as_script` | Compile one cycle into a `scripts.yaml` entry (returns the YAML, optionally writes `<config>/ceiling_scenes/<name>.yaml`). |
-| `ceiling_scene_generator.save_scene` | Persist a scene (layout + effect + params + palette) in HA Storage. |
+| `ceiling_scene_generator.save_scene` | Persist a scene (layout + effect + params + palette + timing) in HA Storage; returns what was stored. |
 | `ceiling_scene_generator.delete_scene` | Remove a stored scene. |
 | `ceiling_scene_generator.list_scenes` | Return all stored scenes plus the runner status. |
 

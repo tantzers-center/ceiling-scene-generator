@@ -36,6 +36,7 @@ from .const import (
     SERVICE_STOP,
     WWW_DIRNAME,
 )
+from .engine import resolve_lights
 from .runner import SceneConfig, SceneRunner
 from .schemas import (
     DELETE_SCENE_SCHEMA,
@@ -161,6 +162,13 @@ def _data(hass: HomeAssistant) -> dict[str, Any] | None:
     return None
 
 
+def _notify_switch(hass: HomeAssistant) -> None:
+    """Refresh the switch entity after the store changed (saved/deleted scenes)."""
+    data = _data(hass)
+    if data is not None:
+        data["runner"].notify()
+
+
 def _resolve_scene(payload: dict[str, Any], saved: dict[str, Any] | None) -> dict[str, Any]:
     scene = payload.get("scene") or (saved or {}).get("scene")
     if not scene or not scene.get("lights"):
@@ -209,6 +217,9 @@ def _async_register_services(hass: HomeAssistant) -> None:
         config = _build_config(payload, saved, scene)
         if payload.get("save"):
             await data["store"].async_save_scene(config.name, config.as_dict())
+        # Remember this run before starting it: it is what `switch.turn_on`, the
+        # auto-resume option and a restart all replay.
+        await data["store"].async_set_last_run(config.as_dict())
         await data["runner"].async_start(config)
         return data["runner"].snapshot()
 
@@ -273,10 +284,27 @@ def _async_register_services(hass: HomeAssistant) -> None:
             raise HomeAssistantError(
                 "Ceiling Scene Generator: a scene needs at least one light; pass `scene:` to save a layout."
             )
-        config = _build_config({"name": name}, saved, dict(scene))
+        # The whole payload goes in, so `effect:`, `params:`, `palette:`,
+        # `update_interval:` and `transition:` given in the call are what gets
+        # stored - not the defaults (previously they were silently dropped).
+        config = _build_config(payload, saved, dict(scene))
+        config.name = name
         record = config.as_dict()
         key = await data["store"].async_save_scene(name, record)
-        return {"name": key, "saved": True, "count": len(data["store"].scenes)}
+        _notify_switch(hass)
+        return {
+            "name": key,
+            "saved": True,
+            "count": len(data["store"].scenes),
+            "stored": {
+                "effect": config.effect,
+                "palette": config.palette,
+                "params": config.params,
+                "update_interval": config.update_interval,
+                "transition": config.transition,
+                "lights": len(resolve_lights(scene)),
+            },
+        }
 
     async def handle_delete_scene(call: ServiceCall) -> dict[str, Any]:
         data = _data(hass)
@@ -284,6 +312,7 @@ def _async_register_services(hass: HomeAssistant) -> None:
             raise HomeAssistantError("Ceiling Scene Generator is not configured yet")
         name = str(call.data["name"])
         deleted = await data["store"].async_delete_scene(name)
+        _notify_switch(hass)
         return {"name": name, "deleted": deleted, "count": len(data["store"].scenes)}
 
     async def handle_list_scenes(call: ServiceCall) -> dict[str, Any]:
@@ -302,7 +331,10 @@ def _async_register_services(hass: HomeAssistant) -> None:
         DOMAIN, SERVICE_START, handle_start, schema=START_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
-    hass.services.async_register(DOMAIN, SERVICE_STOP, handle_stop, schema=STOP_SCHEMA)
+    hass.services.async_register(
+        DOMAIN, SERVICE_STOP, handle_stop, schema=STOP_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
     hass.services.async_register(
         DOMAIN, SERVICE_SAVE_AS_SCRIPT, handle_save_as_script, schema=SAVE_AS_SCRIPT_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,

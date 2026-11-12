@@ -1,8 +1,13 @@
 """Switch platform: a single on/off handle for the running generator.
 
-``switch.ceiling_scene`` is on while the async runner is pushing frames. It is
-also the entity the Lovelace card watches for its status chip, which is why
-``extra_state_attributes`` carries the ``ceiling_scene_generator`` marker.
+The switch is on while the async runner is pushing frames. It carries the
+``ceiling_scene_generator`` marker in ``extra_state_attributes``, which is how
+the Lovelace card finds it (by attribute, not by entity id, so renaming the
+entity never breaks the card) and why the entity also has a fresh ``scenes``
+list after scenes are saved or deleted.
+
+``has_entity_name`` is on and the entity has no name of its own, so the entity
+id is derived from the device name: ``switch.ceiling_scene_generator``.
 """
 
 from __future__ import annotations
@@ -16,7 +21,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, MANUFACTURER, NAME, SWITCH_DEFAULT_NAME, SWITCH_UNIQUE_ID
+from .const import DOMAIN, MANUFACTURER, NAME, SWITCH_UNIQUE_ID
 from .runner import SceneRunner, SceneConfig
 from .storage import SceneStore
 
@@ -35,7 +40,8 @@ class CeilingSceneSwitch(SwitchEntity):
 
     _attr_should_poll = False
     _attr_icon = "mdi:ceiling-light-multiple"
-    _attr_name = SWITCH_DEFAULT_NAME
+    _attr_has_entity_name = True
+    _attr_name = None  # name comes from the device: "Ceiling Scene Generator"
     _attr_unique_id = SWITCH_UNIQUE_ID
 
     def __init__(self, runner: SceneRunner, store: SceneStore) -> None:

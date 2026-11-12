@@ -42,7 +42,7 @@ from typing import Any, Iterable, Mapping, Sequence
 # Constants
 # --------------------------------------------------------------------------- #
 
-VERSION = "1.0.0"
+VERSION = "1.2.0"
 
 TAU = math.pi * 2.0
 

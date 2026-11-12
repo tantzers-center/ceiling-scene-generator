@@ -146,6 +146,10 @@ class SceneRunner:
 
         return remove
 
+    def notify(self) -> None:
+        """Public poke so entities can refresh after external store changes."""
+        self._notify()
+
     def _notify(self) -> None:
         for listener in list(self._listeners):
             try:
