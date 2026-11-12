@@ -29,6 +29,25 @@ RGB / RGBW / RGBWW colour and brightness.
 2. Repository: `https://github.com/tantzers-center/ceiling-scene-generator`, category **Integration**.
 3. Install **Ceiling Scene Generator**, then restart Home Assistant.
 4. **Settings → Devices & services → Add integration → Ceiling Scene Generator.**
+5. **Add the card to a dashboard** (see below) — installing the integration does *not* put the
+   generator UI on a dashboard by itself.
+
+> **Installing the integration gives you three things: a `switch.ceiling_scene` entity, six services,
+> and the card bundle served as a Lovelace resource. The generator UI — canvas, effects, palettes,
+> Start/Stop — is the card, and a dashboard card has to be added once by hand. If all you see after
+> installing is a switch toggle, that is expected: add the card.**
+
+To add it: open a dashboard → **✏️ Edit dashboard** → **+ Add card** → **Manual** → paste:
+
+```yaml
+type: custom:ceiling-scene-card
+title: Living Room Ceiling
+```
+
+If Home Assistant answers **Custom element doesn't exist: ceiling-scene-card**, the resource is not
+loaded yet — **Settings → Dashboards → ⋮ → Resources** should list
+`/ceiling_scene_generator/ceiling-scene-card.js`; add it (type: JavaScript module) if missing, then
+hard-refresh the browser (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>).
 
 ### Manual
 
